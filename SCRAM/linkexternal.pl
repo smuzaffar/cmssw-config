@@ -40,9 +40,10 @@ my $curdir   = cwd();
 my $localtop = &fixPath(&scramReleaseTop($curdir));
 if (!-d "${localtop}/.SCRAM/${arch}"){die "$curdir: Not a SCRAM-Based area. Missing .SCRAM directory.";}
 chdir($localtop);
+my $scramver=&scramVersion($localtop);
 my $cacheext="db";
 my $admindir="";
-if(&scramVersion($localtop)=~/^V[2-9]/){$cacheext="db.gz";$admindir=$arch;}
+if($scramver=~/^V[2-9]/){$cacheext="db.gz";$admindir=$arch;}
 
 if ($all==0)
 {
@@ -284,10 +285,16 @@ sub createLink ()
 
 sub getOrderedTools ()
 {
-  my %tmphash=();
   $cache{alltools}=[];
+  if ($scramver=~/^V[2-9]/){&getOrderedToolsV2(@_);}
+  else{&getOrderedToolsV1(@_);}
+}
+
+sub getOrderedToolsV2 ()
+{
   use BuildSystem::ToolManager;
   my @compilers=();
+  my %tmphash=();
   foreach my $t (reverse @{$cache{toolcache}->toolsdata()})
   {
     my $tn=$t->toolname();
@@ -299,6 +306,30 @@ sub getOrderedTools ()
   {
     if(($tn=~/^\s*$/) || (!exists $cache{toolcache}{SETUP}{$tn}) || ($tn eq "self")){next;}
     if(!exists $tmphash{$tn}){$tmphash{$tn}=1;push @{$cache{alltools}},$tn;}
+  }
+}
+
+sub getOrderedToolsV1 ()
+{
+  my @orderedtools=();
+  foreach my $t (keys %{$cache{toolcache}{SELECTED}})
+  {
+    my $index=$cache{toolcache}{SELECTED}{$t};
+    if($index>=0)
+    {
+      if(!defined $orderedtools[$index]){$orderedtools[$index]=[];}
+      push @{$orderedtools[$index]},$t;
+    }
+  }
+  my %tmphash=();
+  for(my $i=@orderedtools-1;$i>=0;$i--)
+  {
+    if(!defined $orderedtools[$i]){next;}
+    foreach my $t (@{$orderedtools[$i]})
+    {
+      if((!defined $t) || ($t=~/^\s*$/) || (!exists $cache{toolcache}{SETUP}{$t}) || ($t eq "self")){next;}
+      if(!exists $tmphash{$t}){$tmphash{$t}=1;push @{$cache{alltools}},$t;}
+    }
   }
 }
 
