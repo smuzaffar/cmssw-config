@@ -218,10 +218,10 @@ sub Classlib_template ()
             "\t--with-qt-libraries=\$(QT_BASE)/lib &&\\\n",
             "\tcd \$(LOCALTOP) && touch \$\$@\n",
             "\$(WORKINGDIR)/\$(2)/\$(1).made: \$(WORKINGDIR)/\$(2)/\$(1).configured\n",
-            "\t+cd \$(WORKINGDIR)/\$(2); \$(MAKE) &&\\\n",
+            "\tcd \$(WORKINGDIR)/\$(2); \$\$(MAKE) &&\\\n",
             "\tcd \$(LOCALTOP) && touch \$\$@\n",
             "\$(WORKINGDIR)/\$(2)/\$(1).installed: \$(WORKINGDIR)/\$(2)/\$(1).made\n",
-            "\t+cd \$(WORKINGDIR)/\$(2); \$(MAKE) install &&\\\n",
+            "\tcd \$(WORKINGDIR)/\$(2); \$\$(MAKE) install &&\\\n",
             "\tcd \$(LOCALTOP) && rm -f \$(SCRAMSTORENAME_LIB)/lib\$(1).la && touch \$\$@\n",
             "endef\n";
   close($xfh);
