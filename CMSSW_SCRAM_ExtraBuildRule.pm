@@ -175,7 +175,7 @@ sub Classlib_template ()
   print $fh "ifeq (\$(strip \$($parent)),)\n",
             "${safename} := self/${parent}\n",
             "${parent} := ${safename}\n",
-	    "${safename}_XDEPS := \$(WORKINGDIR)/\$(SCRAM_SOURCEDIR)/${parent}/${safename}.installed\n";
+	    "${safename}_XDEPS := \$(WORKINGDIR)/\$(SCRAM_SOURCEDIR)/${parent}/${safename}.headers\n";
   $common->pushstash();$common->library_template_generic();$common->popstash();
   print $fh "${safename}_INIT_FUNC := \$\$(eval \$\$(call LogFile,${safename},${path}))\n",
             "${safename}_INIT_FUNC += \$\$(eval \$\$(call ClassLib,${safename},\$(SCRAM_SOURCEDIR)/${parent},${safepath}))\n",
@@ -219,11 +219,12 @@ sub Classlib_template ()
             "\t\@echo \">> Compiling \$2\"\n",
 	    "\t\@\$(startlog_\$(1))cd \$(WORKINGDIR)/\$(2); \$\$(MAKE) &&\\\n",
             "\tcd \$(LOCALTOP) && touch \$\$@ \$(endlog_\$(1))\n",
-            "\$(WORKINGDIR)/\$(2)/\$(1).installed: \$(WORKINGDIR)/\$(2)/\$(1).made\n",
-            "\t\@echo \">> Installing \$2\"\n",
-	    "\t\@\$(startlog_\$(1))cd \$(WORKINGDIR)/\$(2); \$\$(MAKE) install &&\\\n",
+            "\$(WORKINGDIR)/\$(2)/\$(1).installed: \$(WORKINGDIR)/\$(2)/\$(1).made \$(WORKINGDIR)/\$(2)/\$(1).headers\n",
+            "\t\@echo \">> Installing library \$2\"\n",
+	    "\t\@\$(startlog_\$(1))cd \$(WORKINGDIR)/\$(2); \$\$(MAKE) install-exec &&\\\n",
             "\tcd \$(LOCALTOP) && rm -f \$(SCRAMSTORENAME_LIB)/lib\$(1).la && touch \$\$@ \$(endlog_\$(1))\n",
             "\$(WORKINGDIR)/\$(2)/\$(1).headers: \$(WORKINGDIR)/\$(2)/\$(1).configured\n",
+            "\t\@echo \">> Installing headers \$2\"\n",
             "\t\@\$(startlog_\$(1))cd \$(WORKINGDIR)/\$(2); \$\$(MAKE) install-data &&\\\n",
             "\tcd \$(LOCALTOP) && touch \$\$@ \$(endlog_\$(1))\n",
             "endef\n";
