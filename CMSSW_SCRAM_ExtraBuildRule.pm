@@ -175,12 +175,22 @@ sub Classlib_template ()
   print $fh "ifeq (\$(strip \$($parent)),)\n",
             "${safename} := self/${parent}\n",
             "${parent} := ${safename}\n",
-	    "${safename}_XDEPS := \$(WORKINGDIR)/\$(SCRAM_SOURCEDIR)/${parent}/${safename}.installed\n";
+	    "${safename}_XDEPS := \$(WORKINGDIR)/\$(SCRAM_SOURCEDIR)/${parent}/${safename}.headers\n";
   $common->pushstash();$common->library_template_generic();$common->popstash();
   print $fh "${safename}_INIT_FUNC := \$\$(eval \$\$(call LogFile,${safename},${path}))\n",
             "${safename}_INIT_FUNC += \$\$(eval \$\$(call ClassLib,${safename},\$(SCRAM_SOURCEDIR)/${parent},${safepath}))\n",
             "endif\n";
   
+  my $confstr="./configure -C CPPFLAGS=\"\$\$(\$(1)_CPPFLAGS)\" ".
+            "CC=\"\$\$(strip \$(CC))\" CXX=\"\$\$(strip \$(CXX))\" CFLAGS=\"\$\$(strip \$\$(\$(1)_LOC_FLAGS_CFLAGS_ALL))\" ".
+            "CXXFLAGS=\"\$\$(\$(1)_CXXFLAGS)\" LIBS=\"\$\$(\$(1)_LOC_LIB_ALL:%=-l%)\" LDFLAGS=\"\$\$(\$(1)_LOC_LIBDIR_ALL:%=-L%)\" ".
+            "--prefix=\$(LOCALTOP) --libdir=\$(LOCALTOP)/\$(SCRAMSTORENAME_LIB) ".
+            "--includedir=\$(LOCALTOP)/\$(SCRAMSTORENAME_INCLUDE) ".
+            "--with-zlib   --with-zlib-includes=\$(ZLIB_BASE)/include      --with-zlib-libraries=\$(ZLIB_BASE)/lib ".
+            "--with-bz2lib --with-bz2lib-includes=\$(BZ2LIB_BASE)/include  --with-bz2lib-libraries=\$(BZ2LIB_BASE)/lib ".
+            "--with-pcre   --with-pcre-includes=\$(PCRE_BASE)/include      --with-pcre-libraries=\$(PCRE_BASE)/lib ".
+            "--with-uuid   --with-uuid-includes=\$(UUID_BASE)/include/uuid --with-uuid-libraries=\$(UUID_BASE)/lib";
+
   my $xfhn = "$ENV{LOCALTOP}/$ENV{SCRAM_INTwork}/MakeData/ExtraBuilsRules";
   if (!-d $xfhn){system("mkdir -p $xfhn");}
   $xfhn.="/${safename}.mk";
@@ -192,37 +202,31 @@ sub Classlib_template ()
             "all_\$(3) all_\$(1) \$(1) \$(3): \$(WORKINGDIR)/\$(2)/\$(1).installed\n",
             "\$(WORKINGDIR)/cache/prod/lib\$(1): \$(WORKINGDIR)/\$(2)/\$(1).installed\n",
             "\t\@if [ ! -f \$\$@ ] ; then touch \$\$@; fi\n",
-            "\$(WORKINGDIR)/\$(2)/configure: \$(CONFIGDEPS) \$(\$(1)_BuildFile) \$(LOCALTOP)/\$(2)/configure\n",
-            "\t\@mkdir -p \$\$(dir \$(WORKINGDIR)/\$(2)) &&\\\n",
+            "\$(WORKINGDIR)/\$(2)/configure: \$(CONFIGDEPS) \$(logfile_\$(1)) \$(\$(1)_BuildFile) \$(LOCALTOP)/\$(2)/configure\n",
+	    "\t\@\$(startlog_\$(1))mkdir -p \$\$(dir \$(WORKINGDIR)/\$(2)) &&\\\n",
             "\tif [ -d \$(WORKINGDIR)/\$(2) ] ; then \\\n",
             "\t  rm -rf \$(WORKINGDIR)/\$(2) ;\\\n",
             "\tfi &&\\\n",
-            "\tcp -r \$(LOCALTOP)/\$(2) \$\$(dir \$(WORKINGDIR)/\$(2))\n",
+            "\tcp -r \$(LOCALTOP)/\$(2) \$\$(dir \$(WORKINGDIR)/\$(2)) \$(endlog_\$(1))\n",
             "\$(WORKINGDIR)/\$(2)/\$(1).configured: \$(WORKINGDIR)/\$(2)/configure\n",
-            "\t\@mkdir -p \$\$(\@D)\n",
+            "\t\@echo \">> Configuring \$2\"\n",
+	    "\t\@\$(startlog_\$(1))mkdir -p \$\$(\@D);\\\n",
             "\tcd \$\$(<D); \\\n",
-            "\t./configure -C CPPFLAGS=\"\$\$(\$(1)_CPPFLAGS)\" \\\n",
-            "\tCC=\"\$\$(strip \$(CC))\" CXX=\"\$\$(strip \$(CXX))\" CFLAGS=\"\$\$(strip \$\$(\$(1)_LOC_FLAGS_CFLAGS_ALL))\" \\\n",
-            "\tCXXFLAGS=\"\$\$(\$(1)_CXXFLAGS)\" LIBS=\"\$\$(\$(1)_LOC_LIB_ALL:%=-l%)\" LDFLAGS=\"\$\$(\$(1)_LOC_LIBDIR_ALL:%=-L%)\" \\\n",
-            "\t--prefix=\$(LOCALTOP) --libdir=\$(LOCALTOP)/\$(SCRAMSTORENAME_LIB) \\\n",
-            "\t--includedir=\$(LOCALTOP)/\$(SCRAMSTORENAME_INCLUDE) \\\n",
-            "\t--with-zlib --with-zlib-includes=\$(ZLIB_BASE)/include \\\n",
-            "\t--with-zlib-libraries=\$(ZLIB_BASE)/lib \\\n",
-            "\t--with-bz2lib --with-bz2lib-includes=\$(BZ2LIB_BASE)/include \\\n",
-            "\t--with-bz2lib-libraries=\$(BZ2LIB_BASE)/lib \\\n",
-            "\t--with-pcre --with-pcre-includes=\$(PCRE_BASE)/include \\\n",
-            "\t--with-pcre-libraries=\$(PCRE_BASE)/lib \\\n",
-            "\t--with-uuid --with-uuid-includes=\$(UUID_BASE)/include/uuid \\\n",
-            "\t--with-uuid-libraries=\$(UUID_BASE)/lib \\\n",
-            "\t--with-qt --with-qt-includes=\$(QT_BASE)/include \\\n",
-            "\t--with-qt-libraries=\$(QT_BASE)/lib &&\\\n",
-            "\tcd \$(LOCALTOP) && touch \$\$@\n",
+	    "\techo $confstr &&\\\n",
+	    "\t$confstr &&\\\n",
+            "\tcd \$(LOCALTOP) && touch \$\$@ \$(endlog_\$(1))\n",
             "\$(WORKINGDIR)/\$(2)/\$(1).made: \$(WORKINGDIR)/\$(2)/\$(1).configured\n",
-            "\tcd \$(WORKINGDIR)/\$(2); \$(IGNORE_BUILD_ERR_START) \$\$(MAKE) \$(IGNORE_BUILD_ERR_END) &&\\\n",
-            "\tcd \$(LOCALTOP) && touch \$\$@\n",
-            "\$(WORKINGDIR)/\$(2)/\$(1).installed: \$(WORKINGDIR)/\$(2)/\$(1).made\n",
-            "\tcd \$(WORKINGDIR)/\$(2); \$(IGNORE_BUILD_ERR_START) \$\$(MAKE) install \$(IGNORE_BUILD_ERR_END) &&\\\n",
-            "\tcd \$(LOCALTOP) && rm -f \$(SCRAMSTORENAME_LIB)/lib\$(1).la && touch \$\$@\n",
+            "\t\@echo \">> Compiling \$2\"\n",
+	    "\t\@\$(startlog_\$(1))cd \$(WORKINGDIR)/\$(2); \$\$(MAKE) &&\\\n",
+            "\tcd \$(LOCALTOP) && touch \$\$@ \$(endlog_\$(1))\n",
+            "\$(WORKINGDIR)/\$(2)/\$(1).installed: \$(WORKINGDIR)/\$(2)/\$(1).made \$(WORKINGDIR)/\$(2)/\$(1).headers\n",
+            "\t\@echo \">> Installing library \$2\"\n",
+	    "\t\@\$(startlog_\$(1))cd \$(WORKINGDIR)/\$(2); \$\$(MAKE) install-exec &&\\\n",
+            "\tcd \$(LOCALTOP) && rm -f \$(SCRAMSTORENAME_LIB)/lib\$(1).la && touch \$\$@ \$(endlog_\$(1))\n",
+            "\$(WORKINGDIR)/\$(2)/\$(1).headers: \$(WORKINGDIR)/\$(2)/\$(1).configured\n",
+            "\t\@echo \">> Installing headers \$2\"\n",
+            "\t\@\$(startlog_\$(1))cd \$(WORKINGDIR)/\$(2); \$\$(MAKE) install-data &&\\\n",
+            "\tcd \$(LOCALTOP) && touch \$\$@ \$(endlog_\$(1))\n",
             "endef\n";
   close($xfh);
   return 1;
