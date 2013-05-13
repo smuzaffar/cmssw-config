@@ -1973,10 +1973,14 @@ sub dumpBuildFileLOC ()
   if ($localbf ne "")
   {
     print $fh "${safename}_BuildFile    := \$(WORKINGDIR)/cache/bf/${localbf}\n";
-    foreach my $flag (@{$self->{cache}{DefaultCompilerFlags}})
+    foreach my $xpre ("","REM_")
     {
-      my $v=$core->flags($flag);
-      if($v ne ""){print $fh "${safename}_LOC_FLAGS_${flag}   := $v\n";}
+      foreach my $flag (@{$self->{cache}{DefaultCompilerFlags}})
+      {
+        $flag="${xpre}${flag}";
+        my $v=$core->flags($flag);
+        if($v ne ""){print $fh "${safename}_LOC_FLAGS_${flag}   := $v\n";}
+      }
     }
     foreach my $data ("INCLUDE")
     {

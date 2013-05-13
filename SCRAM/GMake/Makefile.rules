@@ -213,19 +213,19 @@ define AdjustFlags
 $(foreach f,$3,$(filter-out $(strip $(foreach t,$2,$(REM_$t_$f))),$($1_$f)) $(foreach t,$2,$($t_$f)))
 endef
 define Tool_CXXFLAGS
-$(filter-out $(USER_REM_CXXFLAGS),$(CXXFLAGS)) $($(1)_LOC_FLAGS_CXXFLAGS_ALL) $(USER_CXXFLAGS)
+$(filter-out $(USER_REM_CXXFLAGS) $($(1)_LOC_FLAGS_REM_CXXFLAGS),$(CXXFLAGS)) $($(1)_LOC_FLAGS_CXXFLAGS_ALL) $(USER_CXXFLAGS)
 endef
 define Tool_FFLAGS
-$(filter-out $(USER_REM_FFLAGS),$(FFLAGS)) $($(1)_LOC_FLAGS_FFLAGS_ALL) $(USER_FFLAGS)
+$(filter-out $(USER_REM_FFLAGS) $($(1)_LOC_FLAGS_REM_FFLAGS),$(FFLAGS)) $($(1)_LOC_FLAGS_FFLAGS_ALL) $(USER_FFLAGS)
 endef
 define Tool_CFLAGS
-$(filter-out $(USER_REM_CFLAGS),$(CFLAGS)) $($(1)_LOC_FLAGS_CFLAGS_ALL) $(USER_CFLAGS)
+$(filter-out $(USER_REM_CFLAGS) $($(1)_LOC_FLAGS_REM_CFLAGS),$(CFLAGS)) $($(1)_LOC_FLAGS_CFLAGS_ALL) $(USER_CFLAGS)
 endef
 define Tool_CPPFLAGS
-$(filter-out $(USER_REM_CPPFLAGS),$(CPPFLAGS)) $(filter-out $(USER_REM_CPPDEFINES),$(CPPDEFINES)) $($(1)_LOC_FLAGS_CPPDEFINES_ALL) $($(1)_LOC_FLAGS_CPPFLAGS_ALL) $(USER_CPPFLAGS) $(USER_CPPDEFINE) $(addprefix -I,$(wildcard $(INCLUDE))) $(addprefix -I,$(wildcard $($(1)_LOC_INCLUDE_ALL)))
+$(filter-out $(USER_REM_CPPFLAGS) $($(1)_LOC_FLAGS_REM_CPPFLAGS),$(CPPFLAGS)) $(filter-out $(USER_REM_CPPDEFINES) $($(1)_LOC_FLAGS_REM_CPPDEFINES),$(CPPDEFINES)) $($(1)_LOC_FLAGS_CPPDEFINES_ALL) $($(1)_LOC_FLAGS_CPPFLAGS_ALL) $(USER_CPPFLAGS) $(USER_CPPDEFINE) $(addprefix -I,$(wildcard $(INCLUDE))) $(addprefix -I,$(wildcard $($(1)_LOC_INCLUDE_ALL)))
 endef
 define Tool_LDFLAGS
-$(USER_LDFLAGS) $(filter-out $(USER_REM_LDFLAGS),$(LDFLAGS)) $(addprefix -L,$(LIBDIR) $(filter-out $(LIBDIR),$($(1)_LOC_LIBDIR_ALL))) $(addprefix -l,$(LIB)) $(addprefix -l,$($(1)_LOC_LIB_ALL)) $($(1)_LOC_FLAGS_LDFLAGS_ALL)
+$(USER_LDFLAGS) $(filter-out $(USER_REM_LDFLAGS) $($(1)_LOC_FLAGS_REM_LDFLAGS),$(LDFLAGS)) $(addprefix -L,$(LIBDIR) $(filter-out $(LIBDIR),$($(1)_LOC_LIBDIR_ALL))) $(addprefix -l,$(LIB)) $(addprefix -l,$($(1)_LOC_LIB_ALL)) $($(1)_LOC_FLAGS_LDFLAGS_ALL)
 endef
 define CalculateToolOrder
 $(if $(strip $($(1)_EX_USE)),$(shell $(CMD_perl) \-e '@z=($(2) $(foreach dep,$(foreach d,$($(1)_EX_USE),$($d)),$(comma)$($(dep)_ORDER))); @z=sort {$$a <=> $$b} @z;$$x=$$z[0];$$x--;print "$$x";'),$(2))
