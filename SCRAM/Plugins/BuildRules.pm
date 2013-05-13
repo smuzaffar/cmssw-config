@@ -1745,6 +1745,7 @@ sub Project_template()
   {
     my $c = $self->getCompiler($tn);
     print $fh "\$(foreach f,\$(OVERRIDABLE_FLAGS),\$(eval \$f += \$(${c}_EX_FLAGS_\$f_ALL)))\n";
+    print $fh "\$(foreach f,\$(OVERRIDABLE_FLAGS),\$(eval REM_\$f += \$(${c}_EX_FLAGS_REM_\$f_ALL)))\n";
     print $fh "\$(foreach f,\$(filter-out \$(OVERRIDABLE_FLAGS),\$(ALL_COMPILER_FLAGS)),\$(eval \$f += \$(\$(${c}_EX_USE)_EX_FLAGS_\$f)))\n";
   }
   my $rflx=$self->getRootReflex();
