@@ -1725,6 +1725,8 @@ sub Project_template()
   else{print $fh "BIGLIBS := \n";}
 
   # LIB/INCLUDE/USE from toplevel BuildFile
+  my $proj_interface=lc($self->{cache}{ProjectName})."_include";
+  if (!$self->isToolAvailable($proj_interface)){$proj_interface="";}
   foreach my $var ("LIB","INCLUDE","USE")
   {
     print $fh "$var :=\n";
@@ -1737,6 +1739,7 @@ sub Project_template()
     if ($val ne "")
     {
       my $vals=join(" ",@$val);
+      if ($var eq "USE"){$vals="$vals $proj_interface";}
       print $fh "$var += $vals\n";
       $self->addCacheData($var,$vals);
     }
@@ -1975,9 +1978,9 @@ sub dumpBuildFileLOC ()
     print $fh "${safename}_BuildFile    := \$(WORKINGDIR)/cache/bf/${localbf}\n";
     foreach my $xpre ("","REM_")
     {
-      foreach my $flag (@{$self->{cache}{DefaultCompilerFlags}})
+      foreach my $xflag (@{$self->{cache}{DefaultCompilerFlags}})
       {
-        $flag="${xpre}${flag}";
+        my $flag="${xpre}${xflag}";
         my $v=$core->flags($flag);
         if($v ne ""){print $fh "${safename}_LOC_FLAGS_${flag}   := $v\n";}
       }
@@ -2273,6 +2276,8 @@ sub plugins_template()
   my $self=shift;
   my $core=$self->{core};
   my $autoPlugin=undef;
+  my $skip=$core->flags("SKIP_FILES");
+  if (($skip eq "*") || ($skip eq "%")){return 1;}
   if (($self->getLocalBuildFile() ne "") && (!$core->hasbuildproducts()))
   {
     my $flags = $core->allflags();
